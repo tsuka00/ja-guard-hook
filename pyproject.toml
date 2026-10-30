@@ -1,0 +1,51 @@
+[project]
+name = "ja-guard-hook"
+version = "0.1.0"
+description = "Claude Code の応答が英語に切り替わったとき、日本語で書き直させる Stop hook"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "tsuka00" }]
+requires-python = ">=3.9"
+# 実行時の依存は持たない（docs/decisions/0002）
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "pytest>=8.4.2",
+    "ruff>=0.17.3",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = ["--strict-markers", "--strict-config"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle
+  "W",   # pycodestyle
+  "F",   # pyflakes
+  "I",   # isort
+  "N",   # pep8-naming
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "SIM", # flake8-simplify
+  "PT",  # flake8-pytest-style
+  "TID", # flake8-tidy-imports
+  "RUF", # ruff 固有
+]
+
+[tool.mypy]
+# mypy は 3.9 を対象にできない。3.9 の互換性は ruff の target-version と CI の 3.9 実行で担保する
+python_version = "3.10"
+strict = true
+files = ["ja_guard", "tests"]
