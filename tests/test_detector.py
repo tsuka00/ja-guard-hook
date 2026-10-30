@@ -55,6 +55,50 @@ class TestTypicalResponses:
         assert not is_english_dominant(text)
 
 
+class TestParagraphs:
+    def test_response_switching_to_english_midway_is_english(self) -> None:
+        text = (
+            "テストを追加し、すべて通ることを確認しました。\n"
+            "\n"
+            "I refactored the detector module so that it counts English words instead of "
+            "letters, and I also updated the README to describe the new rule."
+        )
+        assert is_english_dominant(text)
+
+    def test_paragraph_break_with_spaces_is_recognized(self) -> None:
+        text = (
+            "テストを追加し、すべて通ることを確認しました。\n"
+            "  \n"
+            "I refactored the detector module so that it counts English words instead of "
+            "letters, and I also updated the README to describe the new rule."
+        )
+        assert is_english_dominant(text)
+
+    def test_japanese_paragraphs_with_service_names_are_not_english(self) -> None:
+        text = (
+            "Amazon Bedrock AgentCore がいいと思います！\n"
+            "\n"
+            "AWS Lambda と Amazon DynamoDB を組み合わせると運用も楽です。"
+        )
+        assert not is_english_dominant(text)
+
+    def test_blank_lines_inside_code_block_do_not_split_paragraphs(self) -> None:
+        text = (
+            "次のとおりです。\n"
+            "```python\n"
+            "def handle_request(payload):\n"
+            "\n"
+            "    return build_the_response_for_the_given_payload(payload)\n"
+            "```\n"
+        )
+        assert not is_english_dominant(text)
+
+    def test_many_short_english_paragraphs_are_english(self) -> None:
+        # 段落ごとには min_words に届かなくても、応答全体で英語主体なら差し戻す
+        text = "Done.\n\nAll tests pass.\n\nI updated the docs.\n\nNothing else."
+        assert is_english_dominant(text)
+
+
 class TestIgnoredSegments:
     @pytest.mark.parametrize("fence", ["```", "~~~", "````"])
     def test_code_block_is_ignored(self, fence: str) -> None:

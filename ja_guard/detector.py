@@ -38,6 +38,8 @@ _EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+", re.ASCII)
 _PATH_CANDIDATE = re.compile(r"(?<![\w.~/-])[\w.~-]*(?:/[\w.~-]*)+", re.ASCII)
 
 _ENGLISH_WORD = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)*")
+# 空白だけの行も段落の区切りとみなす
+_PARAGRAPH_BREAK = re.compile(r"\n[ \t]*\n")
 
 # 句読点・括弧・中黒などの記号は日本語の文字として数えない（長音符は数える）
 _JAPANESE = re.compile(
@@ -56,8 +58,20 @@ _JAPANESE = re.compile(
 
 
 def is_english_dominant(text: str, thresholds: Thresholds = DEFAULT_THRESHOLDS) -> bool:
-    """英単語が min_words 以上あり、かつ日本語の文字数の ratio 倍を超えるとき英語主体とみなす。"""
+    """応答全体か、空行で区切った段落のどれかが英語主体なら英語主体とみなす。
+
+    段落ごとにも見るのは、日本語で書き始めて途中から英語に切り替わった応答を見逃さないため。
+    全体でも見るのは、段落ごとには短い英語が続く応答を見逃さないため。
+    段落への分割はコードを除いた後に行う（コードブロックの中の空行で分けないため）。
+    """
     prose = _strip_ignored(text)
+    return _is_english_prose(prose, thresholds) or any(
+        _is_english_prose(paragraph, thresholds) for paragraph in _PARAGRAPH_BREAK.split(prose)
+    )
+
+
+def _is_english_prose(prose: str, thresholds: Thresholds) -> bool:
+    """英単語が min_words 以上あり、かつ日本語の文字数の ratio 倍を超えるとき英語主体とみなす。"""
     words = len(_ENGLISH_WORD.findall(prose))
     japanese = len(_JAPANESE.findall(prose))
     return words >= thresholds.min_words and words > japanese * thresholds.ratio
