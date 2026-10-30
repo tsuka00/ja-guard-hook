@@ -36,6 +36,13 @@ def test_english_response_writes_additional_context() -> None:
     assert json.loads(result.stdout)["hookSpecificOutput"]["hookEventName"] == "Stop"
 
 
+def test_output_is_readable_utf8() -> None:
+    # 導入時の動作確認で人が読めるよう、日本語をエスケープせずに出力する
+    result = run_hook(stop_payload("I have finished the refactoring and all tests pass now."))
+
+    assert "日本語" in result.stdout.decode("utf-8")
+
+
 def test_japanese_response_writes_nothing() -> None:
     result = run_hook(stop_payload("リファクタリングが終わり、テストもすべて通りました。"))
 

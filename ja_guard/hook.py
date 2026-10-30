@@ -41,14 +41,15 @@ def handle(raw_input: str, environ: Mapping[str, str]) -> str | None:
         return None
 
     return json.dumps(
-        {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": REWRITE_INSTRUCTION}}
+        {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": REWRITE_INSTRUCTION}},
+        ensure_ascii=False,
     )
 
 
 def main() -> int:
-    # ロケールの文字コードに依存せず、Claude Code が渡す UTF-8 として読む
+    # ロケールの文字コードに依存せず、UTF-8 で読み書きする
     raw_input = sys.stdin.buffer.read().decode("utf-8", errors="replace")
     output = handle(raw_input, os.environ)
     if output is not None:
-        sys.stdout.write(output)
+        sys.stdout.buffer.write(output.encode("utf-8"))
     return 0
