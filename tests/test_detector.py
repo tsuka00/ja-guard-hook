@@ -74,6 +74,38 @@ class TestParagraphs:
         )
         assert is_english_dominant(text)
 
+    def test_crlf_paragraph_break_is_recognized(self) -> None:
+        text = (
+            "テストを追加し、すべて通ることを確認しました。\r\n"
+            "\r\n"
+            "I refactored the detector module so that it counts English words instead of "
+            "letters, and I also updated the README to describe the new rule."
+        )
+        assert is_english_dominant(text)
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            # 英語のまま示すのが自然な、箇条書き・引用・表・字下げしたコード
+            (
+                "最近のコミットです。\n\n"
+                "- feat: add parser support\n- fix: handle null input\n\n以上です。"
+            ),
+            (
+                "手順です。\n\n1. Open the settings file in your editor\n2. Add the hook entry\n\n"
+                "保存したら、新しいセッションで動作を確かめてください。"
+            ),
+            "エラーは次のとおりです。\n\n> Module not found: Can't resolve the file\n\n直します。",
+            (
+                "結果です。\n\n| Name | Status | Note |\n| --- | --- | --- |\n"
+                "| parser | passed | ok |\n\nすべて通りました。"
+            ),
+            "次を実行します。\n\n    npm run build and then deploy it now\n",
+        ],
+    )
+    def test_structural_english_paragraph_is_not_english(self, text: str) -> None:
+        assert not is_english_dominant(text)
+
     def test_japanese_paragraphs_with_service_names_are_not_english(self) -> None:
         text = (
             "Amazon Bedrock AgentCore がいいと思います！\n"

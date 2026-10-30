@@ -40,6 +40,8 @@ _PATH_CANDIDATE = re.compile(r"(?<![\w.~/-])[\w.~-]*(?:/[\w.~-]*)+", re.ASCII)
 _ENGLISH_WORD = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)*")
 # 空白だけの行も段落の区切りとみなす
 _PARAGRAPH_BREAK = re.compile(r"\n[ \t]*\n")
+# 箇条書き・番号付きリスト・引用・表・4スペース字下げのコードの行。段落ごとの判定では見ない
+_STRUCTURAL_LINE = re.compile(r"[ \t]*(?:[-*+][ \t]|\d+[.)][ \t]|[>|])| {4}|\t")
 
 # 句読点・括弧・中黒などの記号は日本語の文字として数えない（長音符は数える）
 _JAPANESE = re.compile(
@@ -61,13 +63,20 @@ def is_english_dominant(text: str, thresholds: Thresholds = DEFAULT_THRESHOLDS) 
     """応答全体か、空行で区切った段落のどれかが英語主体なら英語主体とみなす。
 
     段落ごとにも見るのは、日本語で書き始めて途中から英語に切り替わった応答を見逃さないため。
+    段落ごとの判定では、箇条書き・引用・表・字下げしたコードの行を見ない。コミット一覧や
+    引用したエラー文のように、日本語の応答でも英語のまま示すのが自然な部分だから。
     全体でも見るのは、段落ごとには短い英語が続く応答を見逃さないため。
     段落への分割はコードを除いた後に行う（コードブロックの中の空行で分けないため）。
     """
     prose = _strip_ignored(text)
     return _is_english_prose(prose, thresholds) or any(
-        _is_english_prose(paragraph, thresholds) for paragraph in _PARAGRAPH_BREAK.split(prose)
+        _is_english_prose(_drop_structural_lines(paragraph), thresholds)
+        for paragraph in _PARAGRAPH_BREAK.split(prose)
     )
+
+
+def _drop_structural_lines(paragraph: str) -> str:
+    return "\n".join(line for line in paragraph.split("\n") if not _STRUCTURAL_LINE.match(line))
 
 
 def _is_english_prose(prose: str, thresholds: Thresholds) -> bool:
@@ -78,7 +87,8 @@ def _is_english_prose(prose: str, thresholds: Thresholds) -> bool:
 
 
 def _strip_ignored(text: str) -> str:
-    text = _strip_fenced_code(text)
+    # CRLF・CR の改行でも段落やフェンスを見分けられるよう、改行を LF にそろえる
+    text = _strip_fenced_code(text.replace("\r\n", "\n").replace("\r", "\n"))
     for pattern in (_INLINE_CODE, _URL, _EMAIL):
         text = pattern.sub(" ", text)
     return _PATH_CANDIDATE.sub(_strip_if_path, text)
