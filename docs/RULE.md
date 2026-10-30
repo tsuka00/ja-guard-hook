@@ -4,8 +4,8 @@
 
 - 公開リポジトリとして第三者が読む前提で書く。コード・コメント・README・docs に、参考にした他者のリポジトリや作者への言及を入れない
 - 実行時のコード（`ja_guard/` とエントリーポイント）は Python 3.9 以上の標準ライブラリだけで書く。サードパーティのパッケージは開発用（dev 依存）に限る
-- 標準入出力（`sys.stdin` / `sys.stdout` / `sys.stderr` / `print`）と環境変数（`os.environ` / `os.getenv`）は `ja_guard/hook.py` だけが扱う（ruff の TID251・T20 で禁止済み）
-- ファイルの読み書き（`open` 等）は実行時のコードで使わない。ruff では禁止できないため、レビューで確認する
+- 標準入出力と環境変数は `ja_guard/hook.py` だけが扱う。`sys.stdin` / `sys.stdout` / `sys.stderr`（`__stdin__` 等を含む）・`print`・`os.environ` / `os.environb` / `os.getenv` / `os.getenvb` は ruff の TID251・T20 で禁止済み
+- 組み込みの `input` と `open` は ruff で禁止できない。実行時のコードでは使わず、レビューで確認する
 
 ## 用語集
 

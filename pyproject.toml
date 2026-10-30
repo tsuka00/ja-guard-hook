@@ -50,10 +50,15 @@ allowed-confusables = ["（", "）", "〇"]
 # 標準入出力と環境変数は ja_guard/hook.py だけが扱う（判定ロジックを純関数に保つため）
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "os.environ".msg = "環境変数は ja_guard/hook.py で読み、ja_guard.config.load_thresholds に渡す"
+"os.environb".msg = "環境変数は ja_guard/hook.py で読み、ja_guard.config.load_thresholds に渡す"
 "os.getenv".msg = "環境変数は ja_guard/hook.py で読み、ja_guard.config.load_thresholds に渡す"
+"os.getenvb".msg = "環境変数は ja_guard/hook.py で読み、ja_guard.config.load_thresholds に渡す"
 "sys.stdin".msg = "標準入力は ja_guard/hook.py の main だけが読む"
+"sys.__stdin__".msg = "標準入力は ja_guard/hook.py の main だけが読む"
 "sys.stdout".msg = "標準出力は ja_guard/hook.py の main だけが書く"
+"sys.__stdout__".msg = "標準出力は ja_guard/hook.py の main だけが書く"
 "sys.stderr".msg = "標準エラー出力は ja_guard/hook.py の main だけが書く"
+"sys.__stderr__".msg = "標準エラー出力は ja_guard/hook.py の main だけが書く"
 
 # banned-api は組み込み関数に効かないため、print は T20 で禁止する
 [tool.ruff.lint.per-file-ignores]
