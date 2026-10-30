@@ -2,6 +2,10 @@
 
 コード・URL・メールアドレス・ファイルパスは英語の文章ではないので数えない。
 日本語の応答でも、英語のコマンドや識別子を見せるのは正当な使い方のため。
+
+除外の正規表現は、トークンの途中から照合を始めないよう否定の後読みで始点を区切りの直後に限る。
+始点を限らないと、区切りのない長い英数字列（ハッシュ・minify 済みのコード等）で
+照合が2乗の時間になる。
 """
 
 from __future__ import annotations
@@ -22,15 +26,13 @@ class Thresholds:
 
 DEFAULT_THRESHOLDS = Thresholds()
 
-_IGNORED_PATTERNS: tuple[re.Pattern[str], ...] = (
-    # フェンスで囲んだコードブロック。閉じ忘れは末尾までをコードとみなす
-    re.compile(r"(```|~~~)[\s\S]*?(?:\1|\Z)"),
-    re.compile(r"`[^`\n]+`"),
-    re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://[!-~]+"),
-    # \w が日本語に一致しないよう ASCII に限る
-    re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", re.ASCII),
-    re.compile(r"[\w.~-]*(?:/[\w.~-]+)+/?", re.ASCII),
-)
+# 行頭のフェンスで囲んだコードブロック。閉じ忘れは末尾までをコードとみなす
+_FENCED_CODE = re.compile(r"^[ \t]*(`{3,}|~{3,})[\s\S]*?(?:\n[ \t]*\1[ \t]*$|\Z)", re.MULTILINE)
+_INLINE_CODE = re.compile(r"`[^`\n]+`")
+_URL = re.compile(r"(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*://[!-~]+")
+# \w が日本語に一致しないよう ASCII に限る
+_EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+", re.ASCII)
+_PATH_CANDIDATE = re.compile(r"(?<![\w.~/-])[\w.~-]*(?:/[\w.~-]*)+", re.ASCII)
 
 _LATIN = re.compile(r"[A-Za-z]")
 
@@ -45,6 +47,7 @@ _JAPANESE = re.compile(
     "\u4e00-\u9fff"  # CJK 統合漢字
     "\uf900-\ufaff"  # CJK 互換漢字
     "\uff66-\uff9f"  # 半角片仮名
+    "\U00020000-\U0003134f"  # CJK 統合漢字拡張 B〜G
     "]"
 )
 
@@ -58,6 +61,15 @@ def is_english_dominant(text: str, thresholds: Thresholds = DEFAULT_THRESHOLDS) 
 
 
 def _strip_ignored(text: str) -> str:
-    for pattern in _IGNORED_PATTERNS:
+    for pattern in (_FENCED_CODE, _INLINE_CODE, _URL, _EMAIL):
         text = pattern.sub(" ", text)
-    return text
+    return _PATH_CANDIDATE.sub(_strip_if_path, text)
+
+
+def _strip_if_path(match: re.Match[str]) -> str:
+    return " " if _looks_like_path(match.group().rstrip(".")) else match.group()
+
+
+def _looks_like_path(token: str) -> bool:
+    """and/or のようなスラッシュ区切りの英単語は文章として数え、パスらしい形だけを除外する。"""
+    return token.startswith(("/", "~", ".")) or token.endswith("/") or "." in token or "_" in token

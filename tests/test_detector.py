@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from ja_guard.detector import Thresholds, is_english_dominant
@@ -42,6 +44,22 @@ class TestIgnoredSegments:
         )
         assert not is_english_dominant(text)
 
+    def test_indented_code_block_is_ignored(self) -> None:
+        text = (
+            "1. 次のコマンドで確認できます。\n"
+            "   ```bash\n"
+            "   uv run pytest --verbose --capture=no tests/test_detector.py\n"
+            "   ```\n"
+        )
+        assert not is_english_dominant(text)
+
+    def test_backticks_inside_sentence_do_not_hide_following_text(self) -> None:
+        text = (
+            "Use ``` to open a fenced block. Then I refactored the whole module "
+            "and all the tests pass now."
+        )
+        assert is_english_dominant(text)
+
     def test_japanese_inside_code_block_is_not_counted(self) -> None:
         text = (
             "Here is the updated configuration for the hook settings file.\n"
@@ -59,9 +77,22 @@ class TestIgnoredSegments:
         text = "詳細は https://code.claude.com/docs/en/hooks#stop-decision-control を参照。"
         assert not is_english_dominant(text)
 
-    def test_file_path_is_ignored(self) -> None:
-        text = "/Users/someone/projects/personal-verification/ja_guard/detector.py を更新。"
-        assert not is_english_dominant(text)
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/Users/someone/projects/personal-verification/ja_guard/detector.py",
+            "~/.claude/hooks/ja-guard-hook/main.py",
+            "./scripts/check-translation-coverage.sh",
+            "ja_guard/detector_module_name.py",
+            "docs/decisions/architecture/",
+        ],
+    )
+    def test_file_path_is_ignored(self, path: str) -> None:
+        assert not is_english_dominant(f"{path} を更新しました。")
+
+    def test_slash_separated_words_are_counted(self) -> None:
+        text = "Updated input/output, read/write and client/server handling."
+        assert is_english_dominant(text)
 
     def test_email_address_is_ignored(self) -> None:
         text = "連絡先は someone.longname@example-company.co.jp です。"
@@ -78,6 +109,7 @@ class TestJapaneseCharacters:
             "漢字",  # CJK 統合漢字
             "時々",  # 踊り字
             "ㇰ㐂",  # 片仮名拡張・CJK 統合漢字拡張 A
+            "𠮷𩸽",  # CJK 統合漢字拡張 B
         ],
     )
     def test_japanese_characters_are_counted(self, japanese: str) -> None:
@@ -101,3 +133,14 @@ class TestThresholds:
 
     def test_latin_exceeding_ratio_is_english(self) -> None:
         assert is_english_dominant("abcdefg 日本", Thresholds(min_latin=1, ratio=3.0))
+
+
+class TestPerformance:
+    def test_long_unbroken_text_is_judged_in_linear_time(self) -> None:
+        # ハッシュや minify 済みのコードのような区切りのない文字列でも、Stop を待たせない
+        text = "a" * 50_000
+
+        started = time.perf_counter()
+        is_english_dominant(text)
+
+        assert time.perf_counter() - started < 1.0
