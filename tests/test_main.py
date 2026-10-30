@@ -104,7 +104,7 @@ def test_package_is_found_without_script_directory_on_path() -> None:
 def test_input_is_read_as_utf8_regardless_of_locale() -> None:
     # 標準入出力の既定の文字コードが ASCII の環境でも、日本語を含む入力で落ちない
     result = run_hook(
-        stop_payload("I have finished the refactoring and updated all of the docs. 日本語も少し。"),
+        stop_payload("I have finished the refactoring and updated the docs as well. 日本語。"),
         env={"PYTHONIOENCODING": "ascii"},
     )
 
