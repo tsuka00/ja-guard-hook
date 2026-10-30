@@ -46,6 +46,16 @@ select = [
 # 日本語のコメント・文字列で使う全角文字を、紛らわしい文字として扱わない
 allowed-confusables = ["（", "）", "〇"]
 
+# 標準入出力と環境変数は ja_guard/hook.py だけが扱う（判定ロジックを純関数に保つため）
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"os.environ".msg = "環境変数は ja_guard/hook.py で読み、ja_guard.config.load_thresholds に渡す"
+"sys.stdin".msg = "標準入力は ja_guard/hook.py の main だけが読む"
+"sys.stdout".msg = "標準出力は ja_guard/hook.py の main だけが書く"
+
+[tool.ruff.lint.per-file-ignores]
+"ja_guard/hook.py" = ["TID251"]
+"tests/**" = ["TID251"]
+
 [tool.mypy]
 # mypy は 3.9 を対象にできない。3.9 の互換性は ruff の target-version と CI の 3.9 実行で担保する
 python_version = "3.10"
