@@ -42,6 +42,7 @@ select = [
   "PT",  # flake8-pytest-style
   "TID", # flake8-tidy-imports
   "T20", # flake8-print
+  "PTH123", # 組み込みの open
   "RUF", # ruff 固有
 ]
 # 日本語のコメント・文字列で使う全角文字を、紛らわしい文字として扱わない
@@ -59,11 +60,13 @@ allowed-confusables = ["（", "）", "〇", "！", "？"]
 "sys.__stdout__".msg = "標準出力は ja_guard/hook.py の main だけが書く"
 "sys.stderr".msg = "標準エラー出力は ja_guard/hook.py の main だけが書く"
 "sys.__stderr__".msg = "標準エラー出力は ja_guard/hook.py の main だけが書く"
+"io.open".msg = "ファイルを読み書きしない。入力は ja_guard/hook.py の main が受け取る"
+"os.read".msg = "標準入力は ja_guard/hook.py の main だけが読む"
 
-# banned-api は組み込み関数に効かないため、print は T20 で禁止する
+# banned-api は組み込み関数に効かないため、print は T20、open は PTH123 で禁止する
 [tool.ruff.lint.per-file-ignores]
 "ja_guard/hook.py" = ["TID251"]
-"tests/**" = ["TID251", "T20"]
+"tests/**" = ["TID251", "T20", "PTH123"]
 
 [tool.mypy]
 # mypy は 3.9 を対象にできない。3.9 の互換性は ruff の target-version と CI の 3.9 実行で担保する
