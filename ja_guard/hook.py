@@ -26,7 +26,7 @@ def handle(raw_input: str, environ: Mapping[str, str]) -> str | None:
     """hook の入力（JSON 文字列）を受け取り、差し戻すときだけ出力（JSON 文字列）を返す。"""
     try:
         payload = json.loads(raw_input)
-    except ValueError:
+    except (ValueError, RecursionError):  # RecursionError は入れ子の深すぎる JSON で出る
         return None
     if not isinstance(payload, dict) or payload.get("hook_event_name") != "Stop":
         return None

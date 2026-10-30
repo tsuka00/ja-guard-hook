@@ -64,7 +64,7 @@ class TestPass:
         del payload["last_assistant_message"]
         assert handle(json.dumps(payload), {}) is None
 
-    @pytest.mark.parametrize("raw_input", ["", "not json", "[]", '"text"'])
+    @pytest.mark.parametrize("raw_input", ["", "not json", "[]", '"text"', "[" * 100_000])
     def test_malformed_input_passes(self, raw_input: str) -> None:
         assert handle(raw_input, {}) is None
 
