@@ -26,6 +26,12 @@ def test_invalid_min_latin_falls_back_to_default(value: str) -> None:
     assert thresholds == Thresholds(min_latin=DEFAULT_THRESHOLDS.min_latin, ratio=2.5)
 
 
+def test_too_large_min_latin_falls_back_to_default() -> None:
+    # float に変換できない大きさの整数でも例外にしない
+    thresholds = load_thresholds({"JA_GUARD_MIN_LATIN": "1" + "0" * 400})
+    assert thresholds.min_latin == DEFAULT_THRESHOLDS.min_latin
+
+
 @pytest.mark.parametrize("value", ["", "abc", "0", "-1", "nan", "inf"])
 def test_invalid_ratio_falls_back_to_default(value: str) -> None:
     thresholds = load_thresholds({"JA_GUARD_MIN_LATIN": "40", "JA_GUARD_RATIO": value})
