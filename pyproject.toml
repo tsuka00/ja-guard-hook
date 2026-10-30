@@ -43,6 +43,8 @@ select = [
   "TID", # flake8-tidy-imports
   "RUF", # ruff 固有
 ]
+# 日本語のコメント・文字列で使う全角文字を、紛らわしい文字として扱わない
+allowed-confusables = ["（", "）", "〇"]
 
 [tool.mypy]
 # mypy は 3.9 を対象にできない。3.9 の互換性は ruff の target-version と CI の 3.9 実行で担保する
