@@ -45,7 +45,7 @@ select = [
   "RUF", # ruff 固有
 ]
 # 日本語のコメント・文字列で使う全角文字を、紛らわしい文字として扱わない
-allowed-confusables = ["（", "）", "〇"]
+allowed-confusables = ["（", "）", "〇", "！", "？"]
 
 # 標準入出力と環境変数は ja_guard/hook.py だけが扱う（判定ロジックを純関数に保つため）
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
