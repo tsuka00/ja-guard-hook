@@ -71,4 +71,4 @@ class TestPass:
 
 class TestThresholdsFromEnvironment:
     def test_environment_thresholds_are_applied(self) -> None:
-        assert handle(stop_input(), {"JA_GUARD_MIN_LATIN": "1000"}) is None
+        assert handle(stop_input(), {"JA_GUARD_MIN_WORDS": "1000"}) is None

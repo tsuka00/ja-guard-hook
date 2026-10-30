@@ -8,7 +8,7 @@ from typing import TypeVar
 
 from ja_guard.detector import DEFAULT_THRESHOLDS, Thresholds
 
-MIN_LATIN_ENV = "JA_GUARD_MIN_LATIN"
+MIN_WORDS_ENV = "JA_GUARD_MIN_WORDS"
 RATIO_ENV = "JA_GUARD_RATIO"
 
 _Number = TypeVar("_Number", int, float)
@@ -17,7 +17,7 @@ _Number = TypeVar("_Number", int, float)
 def load_thresholds(environ: Mapping[str, str]) -> Thresholds:
     """不正な値は既定値に戻す。設定の誤りで例外終了すると、検査そのものが働かなくなるため。"""
     return Thresholds(
-        min_latin=_parse_positive(environ.get(MIN_LATIN_ENV), int, DEFAULT_THRESHOLDS.min_latin),
+        min_words=_parse_positive(environ.get(MIN_WORDS_ENV), int, DEFAULT_THRESHOLDS.min_words),
         ratio=_parse_positive(environ.get(RATIO_ENV), float, DEFAULT_THRESHOLDS.ratio),
     )
 
