@@ -1,0 +1,24 @@
+# 環境変数・シークレット
+.env
+.env.*
+
+# Claude Code（CLAUDE.md はコミットしない。個人設定もチーム共有しない）
+CLAUDE.md
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# OS
+.DS_Store
