@@ -74,6 +74,22 @@ def test_closed_stdin_exits_without_error() -> None:
     assert result.stderr == b""
 
 
+def test_closed_stdout_exits_without_error() -> None:
+    # 標準出力が閉じていると sys.stdout は None になる。差し戻す入力でも例外終了しない
+    payload = json.dumps(stop_payload("I have finished the refactoring and all tests pass now."))
+    result = subprocess.run(
+        ["sh", "-c", f'"{sys.executable}" "{ENTRY_POINT}" >&-'],
+        input=payload.encode("utf-8"),
+        capture_output=False,
+        stderr=subprocess.PIPE,
+        env=isolated_environ(),
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == b""
+
+
 def test_package_is_found_without_script_directory_on_path() -> None:
     # PYTHONSAFEPATH（3.11 以降）が有効でスクリプトのディレクトリが sys.path に入らなくても動く
     result = run_hook(
