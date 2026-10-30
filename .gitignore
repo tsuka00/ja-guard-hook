@@ -22,3 +22,8 @@ dist/
 
 # OS
 .DS_Store
+
+# ローカル専用のプロジェクト運用メモ
+docs/TODO.md
+docs/KNOWLEDGE.md
+docs/RULE.md
