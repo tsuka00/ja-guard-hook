@@ -18,7 +18,7 @@ class Thresholds:
     # 英語の語がこれ未満の応答は判定しない（「OK」程度の短い返事を差し戻さないため）
     min_words: int = 5
     # 英語の語の数が日本語の文字数のこの倍を超えたら英語主体とみなす
-    ratio: float = 1.5
+    ratio: float = 3.0
 
 
 DEFAULT_THRESHOLDS = Thresholds()
