@@ -64,4 +64,4 @@ allowed-confusables = ["（", "）", "〇"]
 # mypy は 3.9 を対象にできない。3.9 の互換性は ruff の target-version と CI の 3.9 実行で担保する
 python_version = "3.10"
 strict = true
-files = ["ja_guard", "tests"]
+files = ["main.py", "ja_guard", "tests"]

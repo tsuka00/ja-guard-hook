@@ -50,10 +50,21 @@ def test_japanese_response_writes_nothing() -> None:
     assert result.stdout == b""
 
 
+def test_package_is_found_without_script_directory_on_path() -> None:
+    # PYTHONSAFEPATH（3.11 以降）が有効でスクリプトのディレクトリが sys.path に入らなくても動く
+    result = run_hook(
+        stop_payload("I have finished the refactoring and all tests pass now."),
+        env={"PYTHONSAFEPATH": "1"},
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == b""
+
+
 def test_input_is_read_as_utf8_regardless_of_locale() -> None:
     # 標準入出力の既定の文字コードが ASCII の環境でも、日本語を含む入力で落ちない
     result = run_hook(
-        stop_payload("I have finished the refactoring and updated the docs. 日本語も少し。"),
+        stop_payload("I have finished the refactoring and updated all of the docs. 日本語も少し。"),
         env={"PYTHONIOENCODING": "ascii"},
     )
 
