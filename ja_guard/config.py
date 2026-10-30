@@ -29,8 +29,6 @@ def _parse_positive(
         return default
     try:
         parsed = convert(value)
-        # float に変換できない大きさの int では isfinite が OverflowError を投げる
-        is_usable = math.isfinite(parsed) and parsed > 0
-    except (ValueError, OverflowError):
+    except ValueError:
         return default
-    return parsed if is_usable else default
+    return parsed if math.isfinite(parsed) and parsed > 0 else default

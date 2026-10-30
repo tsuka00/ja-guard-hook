@@ -27,7 +27,7 @@ def handle(raw_input: str, environ: Mapping[str, str]) -> str | None:
     """hook の入力（JSON 文字列）を受け取り、差し戻すときだけ出力（JSON 文字列）を返す。"""
     try:
         payload = json.loads(raw_input)
-    except (ValueError, RecursionError):  # RecursionError は入れ子の深すぎる JSON で出る
+    except ValueError:
         return None
     if not isinstance(payload, dict) or payload.get("hook_event_name") != "Stop":
         return None
@@ -48,9 +48,6 @@ def handle(raw_input: str, environ: Mapping[str, str]) -> str | None:
 
 
 def main() -> int:
-    # 標準入出力が閉じた状態で起動されたときは、入力を受け取れないか結果を返せないので何もしない
-    if sys.stdin is None or sys.stdout is None:
-        return 0
     # ロケールの文字コードに依存せず、UTF-8 で読み書きする
     raw_input = sys.stdin.buffer.read().decode("utf-8", errors="replace")
     output = handle(raw_input, os.environ)
