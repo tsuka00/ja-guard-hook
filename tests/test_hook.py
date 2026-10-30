@@ -27,7 +27,7 @@ def stop_input(**overrides: Any) -> str:
     return json.dumps(payload)
 
 
-class TestBlock:
+class TestSendBack:
     def test_english_response_is_sent_back_with_additional_context(self) -> None:
         output = handle(stop_input(), {})
 
@@ -55,9 +55,9 @@ class TestPass:
     def test_other_events_pass(self) -> None:
         assert handle(stop_input(hook_event_name="SubagentStop"), {}) is None
 
-    @pytest.mark.parametrize("message", [None, 123, ["text"]])
-    def test_non_string_response_passes(self, message: object) -> None:
-        assert handle(stop_input(last_assistant_message=message), {}) is None
+    @pytest.mark.parametrize("response", [None, 123, ["text"]])
+    def test_non_string_response_passes(self, response: object) -> None:
+        assert handle(stop_input(last_assistant_message=response), {}) is None
 
     def test_missing_response_passes(self) -> None:
         payload = json.loads(stop_input())

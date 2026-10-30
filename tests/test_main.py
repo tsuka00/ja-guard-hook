@@ -23,8 +23,12 @@ def run_hook(
     )
 
 
-def stop_payload(message: str) -> dict[str, object]:
-    return {"hook_event_name": "Stop", "stop_hook_active": False, "last_assistant_message": message}
+def stop_payload(response: str) -> dict[str, object]:
+    return {
+        "hook_event_name": "Stop",
+        "stop_hook_active": False,
+        "last_assistant_message": response,
+    }
 
 
 def test_english_response_writes_additional_context() -> None:
