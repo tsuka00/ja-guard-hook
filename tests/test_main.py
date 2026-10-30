@@ -11,6 +11,12 @@ from pathlib import Path
 ENTRY_POINT = Path(__file__).resolve().parent.parent / "main.py"
 
 
+def isolated_environ(overrides: dict[str, str] | None = None) -> dict[str, str]:
+    """開発者のシェルに設定された閾値（JA_GUARD_*）がテストの結果を変えないようにする。"""
+    base = {key: value for key, value in os.environ.items() if not key.startswith("JA_GUARD_")}
+    return {**base, **(overrides or {})}
+
+
 def run_hook(
     payload: dict[str, object], env: dict[str, str] | None = None
 ) -> subprocess.CompletedProcess[bytes]:
@@ -18,7 +24,7 @@ def run_hook(
         [sys.executable, str(ENTRY_POINT)],
         input=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
         capture_output=True,
-        env={**os.environ, **(env or {})},
+        env=isolated_environ(env),
         check=False,
     )
 
@@ -52,6 +58,20 @@ def test_japanese_response_writes_nothing() -> None:
 
     assert result.returncode == 0
     assert result.stdout == b""
+
+
+def test_closed_stdin_exits_without_error() -> None:
+    # 標準入力が閉じていると sys.stdin は None になる
+    result = subprocess.run(
+        ["sh", "-c", f'"{sys.executable}" "{ENTRY_POINT}" <&-'],
+        capture_output=True,
+        env=isolated_environ(),
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == b""
+    assert result.stderr == b""
 
 
 def test_package_is_found_without_script_directory_on_path() -> None:

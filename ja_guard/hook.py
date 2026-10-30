@@ -47,6 +47,9 @@ def handle(raw_input: str, environ: Mapping[str, str]) -> str | None:
 
 
 def main() -> int:
+    # 標準入力が閉じた状態で起動されたときは、検査する入力がないので何もしない
+    if sys.stdin is None:
+        return 0
     # ロケールの文字コードに依存せず、UTF-8 で読み書きする
     raw_input = sys.stdin.buffer.read().decode("utf-8", errors="replace")
     output = handle(raw_input, os.environ)
