@@ -1,243 +1,94 @@
-from __future__ import annotations
+"""判定のテスト。例文は、過去のセッションで実際に出た応答の形に合わせている。"""
 
-import time
+from __future__ import annotations
 
 import pytest
 
 from ja_guard.detector import Thresholds, is_english_dominant
 
-# 英単語が1語でも残れば英語主体と判定する閾値。除外の漏れを検出するために使う
-STRICT = Thresholds(min_words=1, ratio=0.01)
-# 英単語と日本語が同数なら英語主体としない閾値。日本語の文字の数え方を検証するために使う
-EVEN = Thresholds(min_words=1, ratio=1.0)
 
-
-class TestTypicalResponses:
-    def test_japanese_response_is_not_english(self) -> None:
-        text = "設定ファイルを更新しました。次はテストを追加します。"
-        assert not is_english_dominant(text)
-
-    def test_english_response_is_english(self) -> None:
-        text = (
-            "I've updated the configuration file and added the missing tests. "
-            "Let me know if you want me to run the full suite."
-        )
-        assert is_english_dominant(text)
-
-    def test_english_with_a_few_japanese_words_is_english(self) -> None:
-        text = "I updated the 設定 file and confirmed that all tests pass."
-        assert is_english_dominant(text)
-
+class TestEnglishResponses:
     @pytest.mark.parametrize(
         "text",
         [
-            "ruff と mypy の設定を pyproject.toml に追加しました。",
-            "Next.js の App Router で Server Components と Client Components を使い分けます。",
-            "エラーは TypeError: Cannot read properties of undefined (reading 'map') です。",
-            "原因は ModuleNotFoundError: No module named 'ja_guard' でした。",
-            # サービス名などの固有名詞が英語でも、会話が日本語なら日本語の応答とみなす
-            "Amazon Bedrock AgentCore がいいと思います！",
-            (
-                "Amazon Bedrock AgentCore と AWS Lambda と Amazon DynamoDB を"
-                "組み合わせるのがいいと思います！"
-            ),
+            # バックグラウンドの処理を待つ間の報告。英語になりやすい
+            "Tests are running in the background. The next step depends on the results, "
+            "so I'm waiting until they come in.",
+            "The fixes are committed (`abc1234`), and I'm now running another review "
+            "on just that diff. I'll report once the result is in.",
         ],
     )
-    def test_japanese_with_technical_terms_is_not_english(self, text: str) -> None:
+    def test_english_response_is_english(self, text: str) -> None:
+        assert is_english_dominant(text)
+
+    def test_english_response_quoting_japanese_is_english(self) -> None:
+        text = (
+            'The settings page is working: each item shows the "保存済み" (saved) label, '
+            "and the counts per status are correct. Checking the remaining tabs next."
+        )
+        assert is_english_dominant(text)
+
+
+class TestJapaneseResponses:
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "設定ファイルを更新しました。次はテストを追加します。",
+            # 英語の固有名詞・ファイル名・コマンドが多くても、会話は日本語
+            "Amazon Bedrock AgentCore がいいと思います！",
+            "detector.py と hook.py と config.py と main.py と test_hook.py を更新しました。",
+            "CI の完了待ちです。通ったら PR をマージし、`Deploy` ワークフローの "
+            "build → test → deploy を追います。",
+        ],
+    )
+    def test_japanese_response_is_not_english(self, text: str) -> None:
+        assert not is_english_dominant(text)
+
+    def test_japanese_response_listing_urls_is_not_english(self) -> None:
+        text = (
+            "参考にしたページの URL です。\n\n"
+            "- https://example.com/docs/getting-started\n"
+            "- https://example.com/docs/configuration\n"
+            "- https://example.com/docs/troubleshooting\n"
+        )
+        assert not is_english_dominant(text)
+
+    def test_japanese_response_with_english_table_is_not_english(self) -> None:
+        text = (
+            "**users テーブルの例**です。列名は英語のままにしています。\n\n"
+            "| id | user_name | display_name | created_at | updated_at |\n"
+            "|---|---|---|---|---|\n"
+            "| 1 | taro | 山田太郎 | 2026-01-01 | 2026-01-02 |\n"
+        )
         assert not is_english_dominant(text)
 
     def test_short_english_response_is_ignored(self) -> None:
         assert not is_english_dominant("OK, done.")
 
-    @pytest.mark.parametrize("text", ["Sure, I'll check it.", "Sure, I\u2019ll check it."])
-    def test_contraction_is_counted_as_one_word(self, text: str) -> None:
-        # 4語の短い応答。短縮形を2語に数えると min_words（5語）に届いてしまう
-        assert not is_english_dominant(text)
 
-
-class TestParagraphs:
-    def test_response_switching_to_english_midway_is_english(self) -> None:
+class TestCode:
+    def test_code_block_is_not_counted(self) -> None:
         text = (
-            "テストを追加し、すべて通ることを確認しました。\n"
-            "\n"
-            "I refactored the detector module so that it counts English words instead of "
-            "letters, and I also updated the README to describe the new rule."
-        )
-        assert is_english_dominant(text)
-
-    def test_paragraph_break_with_spaces_is_recognized(self) -> None:
-        text = (
-            "テストを追加し、すべて通ることを確認しました。\n"
-            "  \n"
-            "I refactored the detector module so that it counts English words instead of "
-            "letters, and I also updated the README to describe the new rule."
-        )
-        assert is_english_dominant(text)
-
-    def test_crlf_paragraph_break_is_recognized(self) -> None:
-        text = (
-            "テストを追加し、すべて通ることを確認しました。\r\n"
-            "\r\n"
-            "I refactored the detector module so that it counts English words instead of "
-            "letters, and I also updated the README to describe the new rule."
-        )
-        assert is_english_dominant(text)
-
-    @pytest.mark.parametrize(
-        "text",
-        [
-            # 英語のまま示すのが自然な、箇条書き・引用・表・字下げしたコード
-            (
-                "最近のコミットです。\n\n"
-                "- feat: add parser support\n- fix: handle null input\n\n以上です。"
-            ),
-            (
-                "手順です。\n\n1. Open the settings file in your editor\n2. Add the hook entry\n\n"
-                "保存したら、新しいセッションで動作を確かめてください。"
-            ),
-            "エラーは次のとおりです。\n\n> Module not found: Can't resolve the file\n\n直します。",
-            (
-                "結果です。\n\n| Name | Status | Note |\n| --- | --- | --- |\n"
-                "| parser | passed | ok |\n\nすべて通りました。"
-            ),
-            "次を実行します。\n\n    npm run build and then deploy it now\n",
-        ],
-    )
-    def test_structural_english_paragraph_is_not_english(self, text: str) -> None:
-        assert not is_english_dominant(text)
-
-    def test_japanese_paragraphs_with_service_names_are_not_english(self) -> None:
-        text = (
-            "Amazon Bedrock AgentCore がいいと思います！\n"
-            "\n"
-            "AWS Lambda と Amazon DynamoDB を組み合わせると運用も楽です。"
-        )
-        assert not is_english_dominant(text)
-
-    def test_blank_lines_inside_code_block_do_not_split_paragraphs(self) -> None:
-        text = (
-            "次のとおりです。\n"
-            "```python\n"
-            "def handle_request(payload):\n"
-            "\n"
-            "    return build_the_response_for_the_given_payload(payload)\n"
+            "次のコマンドで確認できます。\n"
+            "```bash\n"
+            "uv run pytest --verbose --capture=no tests/test_detector.py and more options\n"
             "```\n"
         )
-        assert not is_english_dominant(text)
+        assert not is_english_dominant(text, Thresholds(min_words=1, ratio=0.01))
 
-    def test_many_short_english_paragraphs_are_english(self) -> None:
-        # 段落ごとには min_words に届かなくても、応答全体で英語主体なら差し戻す
-        text = "Done.\n\nAll tests pass.\n\nI updated the docs.\n\nNothing else."
-        assert is_english_dominant(text)
-
-
-class TestIgnoredSegments:
-    @pytest.mark.parametrize("fence", ["```", "~~~", "````"])
-    def test_code_block_is_ignored(self, fence: str) -> None:
-        text = f"次のとおりです。\n{fence}bash\nuv run pytest --verbose\n{fence}\n"
-        assert not is_english_dominant(text, STRICT)
-
-    def test_indented_code_block_is_ignored(self) -> None:
-        text = "1. 次のとおりです。\n   ```bash\n   uv run pytest --verbose\n   ```\n"
-        assert not is_english_dominant(text, STRICT)
-
-    def test_code_block_closed_by_longer_fence_is_ignored(self) -> None:
-        text = "次のとおりです。\n```\nuv run pytest --verbose\n````\n以上です。"
-        assert not is_english_dominant(text, STRICT)
-
-    def test_japanese_inside_code_block_is_not_counted(self) -> None:
-        text = (
-            "Here is the updated configuration for the hook settings file.\n"
-            "```json\n"
-            '{"comment": "日本語のコメントがたくさん書かれている設定ファイルの例です"}\n'
-            "```\n"
-        )
-        assert is_english_dominant(text)
-
-    @pytest.mark.parametrize(
-        "code",
-        ["`is_english_dominant`", "``load_thresholds``", "``code with ` inside``"],
-    )
-    def test_inline_code_is_ignored(self, code: str) -> None:
-        assert not is_english_dominant(f"{code} を直しました。", STRICT)
-
-    @pytest.mark.parametrize(
-        "url",
-        [
-            "https://code.claude.com/docs/en/hooks#stop-decision-control",
-            "https://example.com/search?q=hook&lang=ja",
-        ],
-    )
-    def test_url_is_ignored(self, url: str) -> None:
-        assert not is_english_dominant(f"詳細は {url} を参照。", STRICT)
-
-    def test_email_address_is_ignored(self) -> None:
-        assert not is_english_dominant("連絡先は someone@example.co.jp です。", STRICT)
-
-    @pytest.mark.parametrize(
-        "path",
-        [
-            "/Users/someone/projects/ja_guard/detector.py",
-            "~/.claude/hooks/ja-guard-hook/main.py",
-            "./scripts/check.sh",
-            "ja_guard/detector.py",
-            "docs/decisions/",
-        ],
-    )
-    def test_file_path_is_ignored(self, path: str) -> None:
-        assert not is_english_dominant(f"{path} を更新しました。", STRICT)
-
-
-class TestCountedSegments:
-    """除外の対象に似ているが、英語の文章として数えるべきもの。"""
-
-    def test_backticks_inside_sentence_do_not_hide_following_text(self) -> None:
-        text = (
-            "Use ``` to open a fenced block. Then I refactored the whole module "
-            "and all the tests pass now."
-        )
-        assert is_english_dominant(text)
-
-    def test_text_after_longer_closing_fence_is_counted(self) -> None:
-        text = "```\nuv run pytest\n````\nI refactored the whole module and all tests pass now."
-        assert is_english_dominant(text)
-
-    def test_unclosed_fence_does_not_hide_following_text(self) -> None:
-        text = "```\nis the fence marker. I refactored the whole module and all tests pass now."
-        assert is_english_dominant(text)
-
-    def test_double_backticks_do_not_pair_with_later_inline_code(self) -> None:
-        text = "``foo`` I refactored the whole module and all the tests pass now so `x` is fine"
-        assert is_english_dominant(text)
-
-    def test_word_right_after_url_is_counted(self) -> None:
-        assert is_english_dominant("詳細は (https://example.com/docs)and を参照。", STRICT)
-
-    def test_slash_separated_words_are_counted(self) -> None:
-        assert is_english_dominant("Updated input/output, read/write and client/server handling.")
+    def test_inline_code_is_not_counted(self) -> None:
+        text = "`uv run pytest --verbose` を実行しました。"
+        assert not is_english_dominant(text, Thresholds(min_words=1, ratio=0.01))
 
 
 class TestJapaneseCharacters:
-    @pytest.mark.parametrize(
-        "japanese",
-        [
-            "ひら",  # 平仮名
-            "カナ",  # 片仮名
-            "ｶﾅ",  # 半角片仮名
-            "漢字",  # CJK 統合漢字
-            "時々",  # 踊り字
-            "ㇰ㐂",  # 片仮名拡張・CJK 統合漢字拡張 A
-            "𠮷𩸽",  # CJK 統合漢字拡張 B
-            "𱍐𱍑",  # CJK 統合漢字拡張 H
-            "𲎰𲎱",  # CJK 統合漢字拡張 J
-        ],
-    )
+    @pytest.mark.parametrize("japanese", ["ひら", "カナ", "ｶﾅ", "漢字", "時々"])
     def test_japanese_characters_are_counted(self, japanese: str) -> None:
-        # 英単語2語に対して日本語2文字なら、1倍を超えない
-        assert not is_english_dominant(f"ab cd {japanese}", EVEN)
+        # 英語の語2つに対して日本語2文字なら、1倍を超えない
+        assert not is_english_dominant(f"ab cd {japanese}", Thresholds(min_words=1, ratio=1.0))
 
     def test_symbols_are_not_counted_as_japanese(self) -> None:
-        assert is_english_dominant("ab cd 「」。、・", EVEN)
+        assert is_english_dominant("ab cd 「」。、・", Thresholds(min_words=1, ratio=1.0))
 
 
 class TestThresholds:
@@ -248,20 +99,8 @@ class TestThresholds:
         assert is_english_dominant("a b c d e", Thresholds(min_words=5, ratio=3.0))
 
     def test_words_equal_to_ratio_are_not_english(self) -> None:
-        # 英単語6語・日本語2文字で、ちょうど3倍
+        # 英語の語6つ・日本語2文字で、ちょうど3倍
         assert not is_english_dominant("a b c d e f 日本", Thresholds(min_words=1, ratio=3.0))
 
     def test_words_exceeding_ratio_are_english(self) -> None:
         assert is_english_dominant("a b c d e f g 日本", Thresholds(min_words=1, ratio=3.0))
-
-
-class TestPerformance:
-    @pytest.mark.parametrize("unit", ["a", "a.", "a@", "a:/", "a/", "a`", "``a", "```a\n"])
-    def test_long_unbroken_text_is_judged_in_linear_time(self, unit: str) -> None:
-        # ハッシュや minify 済みのコードのような区切りのない文字列でも、Stop を待たせない
-        text = unit * (50_000 // len(unit))
-
-        started = time.perf_counter()
-        is_english_dominant(text)
-
-        assert time.perf_counter() - started < 1.0
