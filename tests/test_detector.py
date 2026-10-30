@@ -46,8 +46,13 @@ class TestTypicalResponses:
     def test_japanese_with_technical_terms_is_not_english(self, text: str) -> None:
         assert not is_english_dominant(text)
 
-    def test_short_english_reply_is_ignored(self) -> None:
+    def test_short_english_response_is_ignored(self) -> None:
         assert not is_english_dominant("OK, done.")
+
+    @pytest.mark.parametrize("text", ["Sure, I'll check it.", "Sure, I\u2019ll check it."])
+    def test_contraction_is_counted_as_one_word(self, text: str) -> None:
+        # 4語の短い応答。短縮形を2語に数えると min_words（5語）に届いてしまう
+        assert not is_english_dominant(text)
 
 
 class TestIgnoredSegments:
@@ -148,6 +153,7 @@ class TestJapaneseCharacters:
             "ㇰ㐂",  # 片仮名拡張・CJK 統合漢字拡張 A
             "𠮷𩸽",  # CJK 統合漢字拡張 B
             "𱍐𱍑",  # CJK 統合漢字拡張 H
+            "𲎰𲎱",  # CJK 統合漢字拡張 J
         ],
     )
     def test_japanese_characters_are_counted(self, japanese: str) -> None:

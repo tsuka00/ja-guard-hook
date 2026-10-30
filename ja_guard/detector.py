@@ -37,7 +37,7 @@ _URL = re.compile(r"(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]*://[\w\-.~:/?#@!$&
 _EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+", re.ASCII)
 _PATH_CANDIDATE = re.compile(r"(?<![\w.~/-])[\w.~-]*(?:/[\w.~-]*)+", re.ASCII)
 
-_ENGLISH_WORD = re.compile(r"[A-Za-z]+")
+_ENGLISH_WORD = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)*")
 
 # 句読点・括弧・中黒などの記号は日本語の文字として数えない（長音符は数える）
 _JAPANESE = re.compile(
@@ -50,7 +50,7 @@ _JAPANESE = re.compile(
     "\u4e00-\u9fff"  # CJK 統合漢字
     "\uf900-\ufaff"  # CJK 互換漢字
     "\uff66-\uff9f"  # 半角片仮名
-    "\U00020000-\U000323af"  # CJK 統合漢字拡張 B〜H
+    "\U00020000-\U0003347f"  # CJK 統合漢字拡張 B〜J
     "]"
 )
 
