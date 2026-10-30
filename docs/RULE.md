@@ -4,7 +4,7 @@
 
 - 公開リポジトリとして第三者が読む前提で書く。コード・コメント・README・docs に、参考にした他者のリポジトリや作者への言及を入れない
 - 実行時のコード（`ja_guard/` とエントリーポイント）は Python 3.9 以上の標準ライブラリだけで書く。サードパーティのパッケージは開発用（dev 依存）に限る
-- 判定ロジック（`detector`）は I/O を持たない純関数にする。ファイル・stdin/stdout・環境変数の読み取りは `transcript` / `hook` / `config` に閉じ込める
+- 判定ロジック（`detector`）は I/O を持たない純関数にする。stdin/stdout と環境変数の読み取りは `hook` に、環境変数の解釈は `config` に閉じ込める
 
 ## 用語集
 
@@ -17,4 +17,4 @@
 
 ## コミットの scope
 
-- `detector` / `transcript` / `hook` / `config` / `ci`
+- `detector` / `hook` / `config` / `ci`
