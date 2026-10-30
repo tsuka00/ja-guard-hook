@@ -35,6 +35,12 @@ class TestTypicalResponses:
             "Next.js の App Router で Server Components と Client Components を使い分けます。",
             "エラーは TypeError: Cannot read properties of undefined (reading 'map') です。",
             "原因は ModuleNotFoundError: No module named 'ja_guard' でした。",
+            # サービス名などの固有名詞が英語でも、会話が日本語なら日本語の応答とみなす
+            "Amazon Bedrock AgentCore がいいと思います！",
+            (
+                "Amazon Bedrock AgentCore と AWS Lambda と Amazon DynamoDB を"
+                "組み合わせるのがいいと思います！"
+            ),
         ],
     )
     def test_japanese_with_technical_terms_is_not_english(self, text: str) -> None:
