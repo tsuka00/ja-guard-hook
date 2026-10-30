@@ -50,7 +50,7 @@ _JAPANESE = re.compile(
     "\u4e00-\u9fff"  # CJK 統合漢字
     "\uf900-\ufaff"  # CJK 互換漢字
     "\uff66-\uff9f"  # 半角片仮名
-    "\U00020000-\U0003134f"  # CJK 統合漢字拡張 B〜G
+    "\U00020000-\U000323af"  # CJK 統合漢字拡張 B〜H
     "]"
 )
 

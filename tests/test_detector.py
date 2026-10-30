@@ -141,6 +141,7 @@ class TestJapaneseCharacters:
             "時々",  # 踊り字
             "ㇰ㐂",  # 片仮名拡張・CJK 統合漢字拡張 A
             "𠮷𩸽",  # CJK 統合漢字拡張 B
+            "𱍐𱍑",  # CJK 統合漢字拡張 H
         ],
     )
     def test_japanese_characters_are_counted(self, japanese: str) -> None:
